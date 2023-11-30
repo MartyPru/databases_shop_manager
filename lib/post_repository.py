@@ -1,22 +1,15 @@
 from lib.post import Post
+from lib.comment import Comment
 
 class PostRepository():
     def __init__(self, connection):
         self.connection = connection
 
-    def all(self):
-        rows = self.connection.execute("SELECT * FROM posts;")
-        posts = []
+    def find_with_comments(self, post_id):
+        rows = self.connection.execute("SELECT comments.id AS comment_id, comments.content AS comment_content, comments.post_id, posts.id, posts.title, posts.content FROM comments JOIN posts ON post_id = posts.id WHERE post_id = 1;")
+        comments = []
         for row in rows:
-            post = Post(row['id'], row['title'], row['content'], row['views'], row['account_id'])
-            posts.append(post)
-        return posts
+            comment = Comment(row['comment_id'], row['comment_content'], row['post_id'])
+            comments.append(comment)
+        return Post(rows[0]['id'], rows[0]['title'], rows[0]['content'], comments)
     
-    def find(self, post_id):
-        match = self.connection.execute("SELECT * FROM posts WHERE id = %s", [post_id])[0]
-        post = Post(match['id'], match['title'], match['content'], match['views'], match['account_id'])
-        return post
-    
-    def create_post(self, post):
-        self.connection.execute("INSERT INTO posts (title, content, views, account_id) VALUES (%s, %s, %s, %s)",
-                                [post.title, post.content, post.views, post.account_id])
